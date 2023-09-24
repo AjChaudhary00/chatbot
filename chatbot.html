@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chatbot</title>
+  <style>
+    /* Center-align the chatbot container */
+    p{
+	padding:10px;
+	font-size:40px;
+      position: absolute;
+      font-family: Arial, Helvetica, sans-serif;
+      top: 20px;
+      color:black;
+      background-color: #dadada;
+      border: 10px solid rgb(175, 175, 175);
+      border-radius: 2%;
+    }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(to bottom, #989898, #ffffff);
+    }
+
+    /* Dark theme styles */
+    .chatbot-container {
+      border-radius: 1%;
+      width: 50%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    /* Chat messages container styles */
+    .chat-messages {
+      padding: 20px;
+      height: 300px;
+      overflow-y: scroll;
+      background-color: #c6c6c6;
+      scrollbar-width: thin; /* Create a thin scrollbar for Firefox */
+    }
+
+    /* Individual chat message styles */
+    .message {
+      background-color: #8e8e8e;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin: 8px 0;
+    }
+
+    .message.user {
+      background-color:  #fcfaff;
+    }
+
+    /* User input area styles */
+    .user-input {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background-color: #e1e1e1;
+    }
+
+    /* Input field styles */
+    .input-field {
+      flex-grow: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 4px;
+      background-color: #ffffff;
+      color: #040404;
+    }
+
+    /* Send button styles */
+    .send-button {
+      background-color: #8e8e8e;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .send-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <p>Mindler's Chatbot</p>
+  <div class="chatbot-container">
+    <div class="chat-messages" id="chat-messages">
+      <!-- Chat messages will be displayed here -->
+    </div>
+    <div class="user-input">
+      <input type="text" class="input-field" id="user-input" placeholder="Type your message">
+      <button class="send-button" id="send-button">Send</button>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      const chatMessages = $('#chat-messages');
+      const userInput = $('#user-input');
+      const sendButton = $('#send-button');
+
+      sendButton.click(function () {
+        const messageText = userInput.val().trim();
+        if (messageText !== '') {
+          // Create a new message element for the user's message
+          appendMessage('user', messageText);
+
+          // Make an API request with the user's message
+          fetchChatbotResponse(messageText);
+
+          // Clear the user input field
+          userInput.val('');
+        }
+      });
+
+      // Handle Enter key press
+      userInput.keydown(function (event) {
+        if (event.key === 'Enter') {
+          sendButton.click();
+        }
+      });
+
+      async function fetchChatbotResponse(query) {
+        try {
+          const response = await fetch('http://localhost:6012/api/hackathon/v1/getChatBotAnswer', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+
+          const responseData = await response.json();
+
+          if (responseData.success && responseData.data && responseData.data.length > 0) {
+            // Display chatbot responses
+            responseData.data.forEach((responseText) => {
+              appendMessage('chatbot', responseText);
+            });
+          } else {
+            // Handle no or invalid responses
+            appendMessage('chatbot', 'Sorry, I couldn\'t understand your query.');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          // Handle errors
+        }
+      }
+
+      function appendMessage(sender, messageText) {
+        const messageElement = $('<div></div>');
+        messageElement.addClass('message').addClass(sender);
+        messageElement.text(messageText);
+        chatMessages.append(messageElement);
+        chatMessages.scrollTop(chatMessages.prop('scrollHeight'));
+      }
+    });
+  </script>
+</body>
+</html>
